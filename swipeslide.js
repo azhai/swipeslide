@@ -9,6 +9,7 @@ var SwipeSlide = function(container, options){
     autoPlay: false,              // false, or value in seconds to start auto slideshow
     useTranslate3d: true,
     bulletNavigation: 'link',     // will insert bullet navigation: false, true or 'link' (event handlers will be attached)
+    paginateLabel: false, //
     directionalNavigation: false, // will insert previous and next links
     beforeChange: null,
     afterChange: null                // after slide transition callback
@@ -31,6 +32,7 @@ var SwipeSlide = function(container, options){
   this.setup()
   this.addEventListeners()
   if (this.options.directionalNavigation) this.setupDirectionalNavigation()
+  if (this.options.paginateLabel) this.setupPaginateLabel()
   if (this.options.bulletNavigation) this.setupBulletNavigation()
   if (this.options.autoPlay) this.autoPlay()
 }
@@ -49,7 +51,7 @@ SwipeSlide.prototype = {
       callback = $.proxy(this.autoPlay, this)
     }
     this.move(0, this.options.delay, callback)
-    if (this.options.bulletNavigation) this.setActiveBullet()
+    this.onActivePage()
   },
   first:     function(){ this.page(0) },
   next:      function(){ this.page(this.currentPage+1) },
@@ -94,6 +96,7 @@ SwipeSlide.prototype = {
     this.reel[fn](this.dimension * this.numPages + 'px')
     this.slides[fn](this.dimension / this.options.visibleSlides + 'px')
     // move to first slide without animation
+    if($.isFunction(this.options.beforeChange)) this.options.beforeChange(this, this.currentPage, this.currentPage)
     this.move(0,0)
   },
 
@@ -171,6 +174,12 @@ SwipeSlide.prototype = {
     this.container.append('<ul class="ui-swipeslide-nav"><li class="prev">Previous</li><li class="next">Next</li></ul>')
   },
   
+  setupPaginateLabel: function() {
+    this.paginate = $('<div class="ui-swipeslide-page"></div>')
+    this.paginate.append('<span class="page">1</span> / <span>' + this.numPages + '</span>')
+    this.container.append(this.paginate)
+  },
+  
   /* bullet navigation */
   setupBulletNavigation: function() {
     this.navBullets = $('<ul class="ui-swipeslide-bullets"></ul>')
@@ -181,10 +190,15 @@ SwipeSlide.prototype = {
       }, this))
     }
     this.container.append(this.navBullets)
-    this.setActiveBullet()
+    this.onActivePage()
   },
-  setActiveBullet: function() {
-    this.navBullets.children('li').removeClass('active').eq(this.currentPage).addClass('active')
+  onActivePage: function() {
+    if (this.navBullets) {
+      this.navBullets.children('li').removeClass('active').eq(this.currentPage).addClass('active')
+    }
+    if (this.paginate) {
+      this.paginate.children('span.page').html(this.currentPage + 1)
+    }
   }
 }
 
